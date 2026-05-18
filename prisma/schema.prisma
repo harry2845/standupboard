@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Person {
+  id        String     @id @default(cuid())
+  name      String
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  workItems WorkItem[]
+}
+
+model WorkArea {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  workItems   WorkItem[]
+}
+
+model WorkItem {
+  id               String     @id @default(cuid())
+  title            String
+  description      String?
+  status           Status     @default(todo)
+  eta              DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  workAreaId       String
+  assignedPersonId String?
+  assignedPerson   Person?    @relation(fields: [assignedPersonId], references: [id])
+  workArea         WorkArea   @relation(fields: [workAreaId], references: [id], onDelete: Restrict)
+  comments         Comment[]
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  body       String
+  authorName String?
+  createdAt  DateTime @default(now())
+  workItemId String
+  workItem   WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  entityType  String
+  entityId    String
+  entityLabel String
+  action      String
+  fieldName   String?
+  oldValue    String?
+  newValue    String?
+  ipAddress   String
+  createdAt   DateTime @default(now())
+}
+
+enum Status {
+  todo
+  in_progress
+  blocked
+  done
+}
