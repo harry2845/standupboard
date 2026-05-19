@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getClientIp, logActivity, logChangedFields } from "@/lib/activity";
 import { db } from "@/lib/db";
+import { requireApiUser } from "@/lib/auth";
 import { personSchema } from "@/lib/validations";
 
 type Params = {
@@ -8,6 +9,7 @@ type Params = {
 };
 
 export async function PATCH(request: Request, { params }: Params) {
+  const user = await requireApiUser();
   const { id } = await params;
   const data = personSchema.partial().parse(await request.json());
   const before = await db.person.findUnique({ where: { id } });
@@ -26,6 +28,8 @@ export async function PATCH(request: Request, { params }: Params) {
     entityId: person.id,
     entityLabel: person.name,
     ipAddress: getClientIp(request),
+    actorUserId: user.id,
+    actorUsername: user.username,
     fields: [
       ...(data.name !== undefined
         ? [{ fieldName: "name", oldValue: before.name, newValue: person.name }]
@@ -40,6 +44,7 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 export async function DELETE(request: Request, { params }: Params) {
+  const user = await requireApiUser();
   const { id } = await params;
   const before = await db.person.findUnique({ where: { id } });
 
@@ -61,6 +66,8 @@ export async function DELETE(request: Request, { params }: Params) {
     oldValue: before.active,
     newValue: person.active,
     ipAddress: getClientIp(request),
+    actorUserId: user.id,
+    actorUsername: user.username,
   });
 
   return NextResponse.json(person);

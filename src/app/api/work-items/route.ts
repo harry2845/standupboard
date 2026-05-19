@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { getClientIp, logActivity } from "@/lib/activity";
 import { db } from "@/lib/db";
+import { requireApiUser } from "@/lib/auth";
 import { parseEta, statuses, workItemSchema } from "@/lib/validations";
 
 export async function GET(request: Request) {
+  await requireApiUser();
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const assignedPersonId = searchParams.get("assignedPersonId");
@@ -41,6 +43,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const user = await requireApiUser();
   const data = workItemSchema.parse(await request.json());
   const item = await db.workItem.create({
     data: {
@@ -61,6 +64,8 @@ export async function POST(request: Request) {
     action: "created",
     newValue: item.title,
     ipAddress: getClientIp(request),
+    actorUserId: user.id,
+    actorUsername: user.username,
   });
 
   return NextResponse.json(item, { status: 201 });

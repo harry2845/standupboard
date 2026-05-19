@@ -24,6 +24,8 @@ export async function logActivity({
   oldValue,
   newValue,
   ipAddress,
+  actorUserId,
+  actorUsername,
 }: {
   entityType: string;
   entityId: string;
@@ -33,6 +35,8 @@ export async function logActivity({
   oldValue?: unknown;
   newValue?: unknown;
   ipAddress: string;
+  actorUserId?: string;
+  actorUsername?: string;
 }) {
   await db.activityLog.create({
     data: {
@@ -44,6 +48,8 @@ export async function logActivity({
       oldValue: serializeValue(oldValue),
       newValue: serializeValue(newValue),
       ipAddress,
+      actorUserId,
+      actorUsername,
     },
   });
 }
@@ -54,12 +60,16 @@ export async function logChangedFields({
   entityLabel,
   fields,
   ipAddress,
+  actorUserId,
+  actorUsername,
 }: {
   entityType: string;
   entityId: string;
   entityLabel: string;
   fields: Array<{ fieldName: string; oldValue: unknown; newValue: unknown }>;
   ipAddress: string;
+  actorUserId?: string;
+  actorUsername?: string;
 }) {
   const changed = fields.filter(
     (field) => serializeValue(field.oldValue) !== serializeValue(field.newValue),
@@ -77,6 +87,8 @@ export async function logChangedFields({
       oldValue: serializeValue(field.oldValue),
       newValue: serializeValue(field.newValue),
       ipAddress,
+      actorUserId,
+      actorUsername,
     })),
   });
 }

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { getClientIp, logActivity } from "@/lib/activity";
 import { db } from "@/lib/db";
+import { requireApiUser } from "@/lib/auth";
 import { workAreaSchema } from "@/lib/validations";
 
 export async function GET() {
+  await requireApiUser();
   const areas = await db.workArea.findMany({
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     include: { _count: { select: { workItems: true } } },
@@ -12,6 +14,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const user = await requireApiUser();
   const data = workAreaSchema.parse(await request.json());
   const max = await db.workArea.aggregate({ _max: { sortOrder: true } });
   const area = await db.workArea.create({
@@ -29,6 +32,8 @@ export async function POST(request: Request) {
     action: "created",
     newValue: area.name,
     ipAddress: getClientIp(request),
+    actorUserId: user.id,
+    actorUsername: user.username,
   });
 
   return NextResponse.json(area, { status: 201 });

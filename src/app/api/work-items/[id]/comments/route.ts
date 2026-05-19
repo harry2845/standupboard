@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getClientIp, logActivity } from "@/lib/activity";
 import { db } from "@/lib/db";
+import { requireApiUser } from "@/lib/auth";
 import { commentSchema } from "@/lib/validations";
 
 type Params = {
@@ -8,6 +9,7 @@ type Params = {
 };
 
 export async function GET(_request: Request, { params }: Params) {
+  await requireApiUser();
   const { id } = await params;
   const comments = await db.comment.findMany({
     where: { workItemId: id },
@@ -17,6 +19,7 @@ export async function GET(_request: Request, { params }: Params) {
 }
 
 export async function POST(request: Request, { params }: Params) {
+  const user = await requireApiUser();
   const { id } = await params;
   const data = commentSchema.parse(await request.json());
   const item = await db.workItem.findUnique({ where: { id } });
@@ -41,6 +44,8 @@ export async function POST(request: Request, { params }: Params) {
     fieldName: "comment",
     newValue: comment.body,
     ipAddress: getClientIp(request),
+    actorUserId: user.id,
+    actorUsername: user.username,
   });
 
   return NextResponse.json(comment, { status: 201 });

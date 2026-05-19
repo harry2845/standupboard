@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getClientIp, logActivity, logChangedFields } from "@/lib/activity";
 import { db } from "@/lib/db";
+import { requireApiUser } from "@/lib/auth";
 import { workAreaSchema } from "@/lib/validations";
 
 type Params = {
@@ -8,6 +9,7 @@ type Params = {
 };
 
 export async function PATCH(request: Request, { params }: Params) {
+  const user = await requireApiUser();
   const { id } = await params;
   const data = workAreaSchema.partial().parse(await request.json());
   const before = await db.workArea.findUnique({ where: { id } });
@@ -29,6 +31,8 @@ export async function PATCH(request: Request, { params }: Params) {
     entityId: area.id,
     entityLabel: area.name,
     ipAddress: getClientIp(request),
+    actorUserId: user.id,
+    actorUsername: user.username,
     fields: [
       ...(data.name !== undefined
         ? [{ fieldName: "name", oldValue: before.name, newValue: area.name }]
@@ -46,6 +50,7 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 export async function DELETE(request: Request, { params }: Params) {
+  const user = await requireApiUser();
   const { id } = await params;
   const count = await db.workItem.count({ where: { workAreaId: id } });
 
@@ -69,6 +74,8 @@ export async function DELETE(request: Request, { params }: Params) {
     action: "deleted",
     oldValue: area.name,
     ipAddress: getClientIp(request),
+    actorUserId: user.id,
+    actorUsername: user.username,
   });
 
   return NextResponse.json({ ok: true });

@@ -1,10 +1,12 @@
 import { AppShell } from "@/components/AppShell";
 import { WorkAreaBoard } from "@/components/WorkAreaBoard";
 import { db } from "@/lib/db";
+import { requireUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
+  const user = await requireUser();
   const [people, areas, items] = await Promise.all([
     db.person.findMany({ orderBy: [{ active: "desc" }, { name: "asc" }] }),
     db.workArea.findMany({
@@ -31,7 +33,7 @@ export default async function Home() {
   ]);
 
   return (
-    <AppShell>
+    <AppShell user={user}>
       <WorkAreaBoard initialData={{ people, areas, items }} />
     </AppShell>
   );

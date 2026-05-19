@@ -1,10 +1,34 @@
+import bcrypt from "bcryptjs";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../src/generated/prisma/client";
 
 const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./dev.db" });
 const prisma = new PrismaClient({ adapter });
 
+function normalizeUsername(username: string) {
+  return username.trim().toLowerCase();
+}
+
 async function main() {
+  const adminUsername = process.env.STANDUP_ADMIN_USERNAME;
+  const adminPassword = process.env.STANDUP_ADMIN_PASSWORD;
+
+  if (adminUsername && adminPassword) {
+    await prisma.user.upsert({
+      where: { username: normalizeUsername(adminUsername) },
+      update: {
+        displayName: process.env.STANDUP_ADMIN_DISPLAY_NAME || adminUsername,
+        passwordHash: await bcrypt.hash(adminPassword, 12),
+        active: true,
+      },
+      create: {
+        username: normalizeUsername(adminUsername),
+        displayName: process.env.STANDUP_ADMIN_DISPLAY_NAME || adminUsername,
+        passwordHash: await bcrypt.hash(adminPassword, 12),
+      },
+    });
+  }
+
   const peopleCount = await prisma.person.count();
   if (peopleCount > 0) return;
 

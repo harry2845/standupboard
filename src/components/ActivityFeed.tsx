@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { ActivityLog } from "@/generated/prisma/client";
-import { ArrowRight, Clock, Globe2, ShieldAlert } from "lucide-react";
+import { ArrowRight, Clock, Globe2, ShieldCheck, UserRound } from "lucide-react";
 
 const entityLabels: Record<string, string> = {
   work_item: "Work item",
@@ -44,7 +44,7 @@ export function ActivityFeed({ initialLogs }: { initialLogs: ActivityLog[] }) {
             <p className="text-sm font-bold uppercase tracking-[0.3em] text-blue-200">Activity</p>
             <h1 className="mt-3 text-4xl font-black tracking-tight">Audit the changes</h1>
             <p className="mt-3 max-w-2xl text-slate-300">
-              Lightweight edit history with source IP, field-level changes, and before/after values.
+              Lightweight edit history with account, source IP, field-level changes, and before/after values.
             </p>
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
@@ -59,9 +59,9 @@ export function ActivityFeed({ initialLogs }: { initialLogs: ActivityLog[] }) {
         <div className="grid gap-3 md:grid-cols-[1fr_220px_220px] md:items-center">
           <div className="flex items-center gap-3 text-sm font-semibold text-slate-700">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-white">
-              <ShieldAlert size={18} />
+              <ShieldCheck size={18} />
             </span>
-            IP is an audit hint, not authentication.
+            Account is primary; IP is a secondary audit hint.
           </div>
           <select value={entityType} onChange={(event) => setEntityType(event.target.value)} className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-medium shadow-sm outline-none focus:ring-4 focus:ring-blue-100">
             <option value="all">All entities</option>
@@ -80,17 +80,18 @@ export function ActivityFeed({ initialLogs }: { initialLogs: ActivityLog[] }) {
       </section>
 
       <section className="rounded-[2rem] border border-white/70 bg-white/75 p-4 shadow-xl shadow-slate-200/60 backdrop-blur">
-        <div className="mb-2 hidden grid-cols-[150px_110px_minmax(220px,1fr)_140px_1fr_150px] gap-3 px-4 text-xs font-black uppercase tracking-[0.18em] text-slate-400 lg:grid">
+        <div className="mb-2 hidden grid-cols-[150px_110px_minmax(180px,1fr)_140px_1fr_140px_150px] gap-3 px-4 text-xs font-black uppercase tracking-[0.18em] text-slate-400 lg:grid">
           <span>Time</span>
           <span>Action</span>
           <span>Target</span>
           <span>Field</span>
           <span>Change</span>
+          <span>Actor</span>
           <span>IP</span>
         </div>
         <div className="space-y-3">
           {logs.map((log) => (
-            <article key={log.id} className="grid gap-3 rounded-3xl border border-slate-200/80 bg-white p-4 text-sm shadow-sm lg:grid-cols-[150px_110px_minmax(220px,1fr)_140px_1fr_150px] lg:items-center">
+            <article key={log.id} className="grid gap-3 rounded-3xl border border-slate-200/80 bg-white p-4 text-sm shadow-sm lg:grid-cols-[150px_110px_minmax(180px,1fr)_140px_1fr_140px_150px] lg:items-center">
               <div className="flex items-center gap-2 font-semibold text-slate-500">
                 <Clock size={15} /> {new Date(log.createdAt).toLocaleString()}
               </div>
@@ -108,6 +109,9 @@ export function ActivityFeed({ initialLogs }: { initialLogs: ActivityLog[] }) {
                 <Value value={log.oldValue} />
                 <ArrowRight className="shrink-0 text-slate-300" size={15} />
                 <Value value={log.newValue} />
+              </div>
+              <div className="flex items-center gap-2 rounded-2xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">
+                <UserRound size={14} /> {log.actorUsername ?? "unknown"}
               </div>
               <div className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 font-mono text-xs font-semibold text-slate-600">
                 <Globe2 size={14} /> {log.ipAddress}

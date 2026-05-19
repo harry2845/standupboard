@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getClientIp, logActivity, logChangedFields } from "@/lib/activity";
 import { db } from "@/lib/db";
+import { requireApiUser } from "@/lib/auth";
 import { parseEta, workItemPatchSchema } from "@/lib/validations";
 
 type Params = {
@@ -8,6 +9,7 @@ type Params = {
 };
 
 export async function PATCH(request: Request, { params }: Params) {
+  const user = await requireApiUser();
   const { id } = await params;
   const data = workItemPatchSchema.parse(await request.json());
   const before = await db.workItem.findUnique({
@@ -41,6 +43,8 @@ export async function PATCH(request: Request, { params }: Params) {
     entityId: item.id,
     entityLabel: item.title,
     ipAddress: getClientIp(request),
+    actorUserId: user.id,
+    actorUsername: user.username,
     fields: [
       ...(data.title !== undefined
         ? [{ fieldName: "title", oldValue: before.title, newValue: item.title }]
@@ -73,6 +77,7 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 export async function DELETE(request: Request, { params }: Params) {
+  const user = await requireApiUser();
   const { id } = await params;
   const item = await db.workItem.findUnique({ where: { id } });
 
@@ -88,6 +93,8 @@ export async function DELETE(request: Request, { params }: Params) {
     action: "deleted",
     oldValue: item.title,
     ipAddress: getClientIp(request),
+    actorUserId: user.id,
+    actorUsername: user.username,
   });
 
   return NextResponse.json({ ok: true });
